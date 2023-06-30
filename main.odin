@@ -44,7 +44,7 @@ write_color :: proc(pxl_col: [3]f64) {
 
 main :: proc() {
     //Image
-    aspect_ratio :: 16.0 / 19.0
+    aspect_ratio :: 16.0 / 9.0
     image_width :: 400
     image_height :: int(image_width/aspect_ratio)
 
