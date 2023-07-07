@@ -3,43 +3,56 @@ package main
 import "core:fmt"
 import "core:os"
 import m "core:math"
+import l "core:math/linalg/hlsl"
 
 
-length :: proc(x: [3]f64) -> f64{
-    return m.sqrt_f64(length_squared(x))
+length :: proc(x: l.float3) -> f32{
+    return m.sqrt_f32(length_squared(x))
 
 }
 
-length_squared :: proc(x :[3]f64) -> f64{
+length_squared :: proc(x :l.float3) -> f32{
     x := x
     x*= x
     return x.x + x.y +x.z
 }
 
 
-unit_vector :: proc(x: [3]f64) -> [3]f64 {
+unit_vector :: proc(x: l.float3) -> l.float3 {
     x:= x
     return x/ length(x)
 
 }   
 
 Ray :: struct{
-    origin : [3]f64, 
-    dir : [3]f64,
+    origin : l.float3, 
+    dir : l.float3,
 }
 
-ray_color :: proc(r :^Ray) -> [3]f64{
+ray_color :: proc(r :^Ray) -> l.float3{
+    if hit_sphere(l.float3{0,0,-1},0.5,r){
+
+        return l.float3{1,0,0}
+    }
     unit_dir := unit_vector(r.dir)
     t := 0.5 *(unit_dir.y + 1.0)
-
-    return (1.0 - t) * [3]f64{1.0,1.0,1.0} + t* [3]f64{0.5,0.7,1.0}
+    return (1.0 - t) * l.float3{1.0,1.0,1.0} + t* l.float3{0.5,0.7,1.0}
 
 
 }
 
-write_color :: proc(pxl_col: [3]f64) {
+write_color :: proc(pxl_col: l.float3) {
         
     fmt.print(i64(255.999 * pxl_col.x), ' ', i64(255.999 * pxl_col.y), ' ', i64(255.999 * pxl_col.z),'\n')
+}
+
+hit_sphere :: proc( center :l.float3,radius:f32, r : ^Ray) -> bool{
+    oc := r.origin - center
+    a := l.dot(r.dir,r.dir)
+    b := f32(2.0 * l.dot(oc,r.dir))
+    c := f32(l.dot(oc,oc) - radius*radius)
+    discriminant := b*b - 4*a*c
+    return (discriminant > 0)
 }
 
 main :: proc() {
@@ -50,14 +63,14 @@ main :: proc() {
 
 
     //Camera
-    viewport_height := 2.0
-    viewport_width := aspect_ratio * viewport_height
-    focal_length := 1.0
+    viewport_height :f32= 2.0
+    viewport_width := f32(aspect_ratio * viewport_height)
+    focal_length :f32= 1.0
 
-    origin :[3]f64 = {0,0,0}
-    horizontal :[3]f64={viewport_width,0,0}
-    vertical :[3]f64= {0,viewport_height,0}
-    lower_left_corner := origin - horizontal/2 - vertical/2 - [3]f64{0,0,focal_length}
+    origin :l.float3 = {0,0,0}
+    horizontal :l.float3={viewport_width,0,0}
+    vertical :l.float3= {0,viewport_height,0}
+    lower_left_corner := origin - horizontal/2 - vertical/2 - l.float3{0,0,focal_length}
 
     
 
@@ -65,7 +78,7 @@ main :: proc() {
     //Render
 
 
-    vec3  : [3]f64
+    vec3  : l.float3//l.float3
     ivec3 : [3]i64
 
 
@@ -79,8 +92,8 @@ main :: proc() {
 
 
 
-            u := f64(i) / f64(image_width -1)
-            v := f64(j) / f64(image_height -1)
+            u := f32(i) / f32(image_width -1)
+            v := f32(j) / f32(image_height -1)
              r:= Ray{origin, lower_left_corner + u*horizontal+v*vertical - origin}
 
             pxl_col := ray_color(&r)
